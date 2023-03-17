@@ -74,6 +74,8 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+        self.add_functions()
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Контроль целостности"))
@@ -82,11 +84,24 @@ class Ui_MainWindow(object):
         self.btnChoose.setText(_translate("MainWindow", "Выбрать"))
         self.btnRecovery.setText(_translate("MainWindow", "Восстановить"))
         self.btnControl.setText(_translate("MainWindow", "Добавить на КЦ"))
-        self.label.setText(_translate("MainWindow", "           Следующие файлы добавлены на КЦ"))
+        self.label.setText(_translate("MainWindow", "Следующие файлы добавлены на КЦ"))
         self.pushButton_4.setText(_translate("MainWindow", "ОК"))
         self.pushButton.setText(_translate("MainWindow", "Снять с КЦ"))
         self.pushButton_3.setText(_translate("MainWindow", "Проверить КЦ"))
         self.pushButton_2.setText(_translate("MainWindow", "Отмена"))
+
+    # Вызов функции wrte_number при нажатии на кнопку и передача текстового параметра на самой кнопке
+    def add_functions(self):
+        self.btnChoose.clicked.connect(lambda: self.write_number(self.btnChoose.text()))  # Обработчик события для кнопки
+
+    #  Вызов функции для вывода текста на кнопке Выбрать
+    def write_number(self, number):
+        print(number)
+        if self.label.text() == "Следующие файлы добавлены на КЦ":
+            self.label.setText(number)
+        else:
+            self.label.setText(self.label.text() + number)  #  Дописать к тексту в Label - Выбрать
+
 
 
 if __name__ == "__main__":
