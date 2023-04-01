@@ -20,7 +20,7 @@ def hash_file(file_name):
 
     return h.hexdigest()
 
-summ = 0
+summ = ''
 
 #  Распечатать все файлы и папки рекурсивно
 for dirpath, dirnames, filenames in os.walk("/home/spi_729-1/Документы/Test/"):
@@ -32,6 +32,8 @@ for dirpath, dirnames, filenames in os.walk("/home/spi_729-1/Документы/
         print("Файл: ", os.path.join(dirpath, filename))
         message = hash_file(os.path.join(dirpath, filename))
         print("Хеш-сумма: ", message)
-        #  summ += message
+        summ += message
+
+print(hashlib.sha256(summ.encode('utf8')).hexdigest())
 
 # print(summ)
