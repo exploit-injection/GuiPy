@@ -2,12 +2,9 @@ import hashlib
 import os
 from os import listdir
 
-dir_hash = ''
-
-# print(hashlib.sha256(dir_hash.encode('latin_1')).hexdigest())
-# print("Папки и файлы данного каталога: ", listdir('/home/spi_729-1/Документы/Test/'))  #  Возвращает список файлов и каталогов
-
 # Функция для получения хеш-суммы файла
+
+
 def hash_file(file_name):
     h = hashlib.sha256()  # Создание объекта хеша
 
@@ -20,7 +17,8 @@ def hash_file(file_name):
 
     return h.hexdigest()
 
-summ = ''
+
+dir_hash = ''
 
 #  Распечатать все файлы и папки рекурсивно
 for dirpath, dirnames, filenames in os.walk("/home/spi_729-1/Документы/Test/"):
@@ -32,8 +30,6 @@ for dirpath, dirnames, filenames in os.walk("/home/spi_729-1/Документы/
         print("Файл: ", os.path.join(dirpath, filename))
         message = hash_file(os.path.join(dirpath, filename))
         print("Хеш-сумма: ", message)
-        summ += message
+        dir_hash += message
 
-print(hashlib.sha256(summ.encode('utf8')).hexdigest())
-
-# print(summ)
+print(hashlib.sha256(dir_hash.encode('utf8')).hexdigest())
