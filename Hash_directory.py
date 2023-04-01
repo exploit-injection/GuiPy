@@ -9,6 +9,8 @@ def hash_file(file_name):
     h = hashlib.sha256()  # Создание объекта хеша
 
     #  Открытие файла для чтения в двоичном режиме
+    # check = os.path.exists(file_name)
+    # print(check) - проверка файла на существование
     with open(file_name, 'rb') as file:
         chunk = 0
         while chunk != b'':
