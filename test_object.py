@@ -11,3 +11,6 @@ print(point1.distance_to(point2))
 print(point2.distance_to(point1))
 print(point1.distance_to(point1))
 print(point2.distance_to(point2))
+
+print(point1)
+print(point2)
