@@ -1,4 +1,4 @@
-#  Создание первоначального графического интерфейса для программы
+#  Create first GUI for app
 
 from PyQt5 import QtCore, QtWidgets
 
@@ -106,9 +106,9 @@ class Ui_MainWindow(object):
 
 if __name__ == "__main__":
     import sys
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)  # create applicatio
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec_())  # execute the app
