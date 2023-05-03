@@ -18,6 +18,7 @@ class DlgMain(QDialog):
         elif res == QMessageBox.No:
             QMessageBox.information(self, '', "You have clicked 'No' btn")
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)  # create application
     dlgMain = DlgMain()  # create main GUI window
