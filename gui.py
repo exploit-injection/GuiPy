@@ -1,9 +1,9 @@
-#  Create first GUI for app
-
+#  Импорт необходимых модулей
+import sys
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import *
 
-
+# Код из QTDesigner
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -91,18 +91,19 @@ class Ui_MainWindow(object):
         self.pushButton_3.setText(_translate("MainWindow", "Проверить КЦ"))
         self.pushButton_2.setText(_translate("MainWindow", "Отмена"))
 
-    #  Вызов функции для вывода текста на кнопке Выбрать
+    #  Вызов функции для выбора файлов
     def open_files(self):
         self.btnChoose.clicked.connect(self.choose_files)
 
     def choose_files(self):
-        res = QFileDialog.getOpenFileNames(None, 'Open File', '/home/spi_729-1/Документы', 'txt file (*.txt);;jpg file (*.jpg)')
+        res = QFileDialog.getOpenFileNames(None, 'Откройте файл', '/home/spi_729-1/Документы', 'txt file (*.txt);;jpg file (*.jpg)')
         print(res)
+        dirname = QFileDialog.getExistingDirectory(None, 'Откройте папку', '/home/spi_729-1/Документы')
+        print(dirname)
 
 
 
 if __name__ == "__main__":
-    import sys
     app = QtWidgets.QApplication(sys.argv)  # create applicatio
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
