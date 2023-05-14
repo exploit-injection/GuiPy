@@ -1,6 +1,7 @@
 #  Create first GUI for app
 
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import *
 
 
 class Ui_MainWindow(object):
@@ -74,7 +75,7 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        self.add_functions()
+        self.open_files()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -90,17 +91,13 @@ class Ui_MainWindow(object):
         self.pushButton_3.setText(_translate("MainWindow", "Проверить КЦ"))
         self.pushButton_2.setText(_translate("MainWindow", "Отмена"))
 
-    # Вызов функции wrte_number при нажатии на кнопку и передача текстового параметра на самой кнопке
-    def add_functions(self):
-        self.btnChoose.clicked.connect(lambda: self.write_number(self.btnChoose.text()))  # Обработчик события для кнопки
-
     #  Вызов функции для вывода текста на кнопке Выбрать
-    def write_number(self, number):
-        print(number)
-        if self.label.text() == "Следующие файлы добавлены на КЦ":
-            self.label.setText(number)
-        else:
-            self.label.setText(self.label.text() + number)  #  Дописать к тексту в Label - Выбрать
+    def open_files(self):
+        self.btnChoose.clicked.connect(self.choose_files)
+
+    def choose_files(self):
+        res = QFileDialog.getOpenFileNames(None, 'Open File', '/home/spi_729-1/Документы', 'txt file (*.txt);;jpg file (*.jpg)')
+        print(res)
 
 
 

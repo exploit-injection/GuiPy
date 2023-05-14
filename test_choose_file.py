@@ -26,6 +26,7 @@ class DlgMain(QDialog):
         res = QFileDialog.getOpenFileNames(self, 'Open File', '/home', 'txt file (*.txt);;jpg file (*.jpg)')
         print(res)
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)  # create application
     dlgMain = DlgMain()  # create main GUI window
