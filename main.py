@@ -25,24 +25,29 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         # перебор элементов в окне выбора файлов
         itemtextlist = [str(self.listWidgetChoose.item(i).text()) for i in range(self.listWidgetChoose.count())]
 
-
+        # Проверка добавления основного каталога
+        if directory in itemtextlist:
+            QMessageBox.information(self, 'Внимание', f'Ранее каталог {directory} был добавлен', QMessageBox.Ok)
+        else:
+            self.listWidgetChoose.addItem(directory)
 
         # Вывести в окно все файлы и папки рекурсивно
-        for dir_path, dir_names, file_names in os.walk(directory):
+        for dirpath, dirnames, filenames in os.walk(directory):
 
             # перебрать каталоги
-            for dir_name in dir_names:
-                dir = os.path.join(dir_path, dir_name)
+            for dir_name in dirnames:
+
+                dir = os.path.join(dirpath, dir_name)
                 if dir in itemtextlist:
-                    QMessageBox.information(self, 'Внимание', f'Ранее каталог {dir} и все его файлы были добавлены', QMessageBox.Ok)
+                    QMessageBox.information(self, 'Внимание', f'Ранее каталог {dir} был добавлен', QMessageBox.Ok)
                 else:
                     self.listWidgetChoose.addItem(dir)
 
             # перебрать файлы
-            for file_name in file_names:
-                file = os.path.join(dir_path, os.path.join(dir_path, file_name))
+            for file_name in filenames:
+                file = os.path.join(dirpath, file_name)
                 if file in itemtextlist:
-                    return  # так как с QMessageBox будет выводиться очень много окон
+                    QMessageBox.information(self, 'Внимание', f'Ранее файл {file} был добавлен', QMessageBox.Ok)
                 else:
                     self.listWidgetChoose.addItem(file)
 
