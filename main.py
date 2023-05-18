@@ -85,7 +85,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
             #print(item.checkState())  # 0 на неотмеченных
             if item_checked == QtCore.Qt.CheckState.Unchecked:
                 print("No")
-                self.listWidgetChoose.takeItem(self.listWidgetChoose.)
+                self.listWidgetChoose.takeItem(self.listWidgetChoose.currentRow())
 
         # list_items = self.listWidgetChoose.selectedItems()
         # if not list_items:
