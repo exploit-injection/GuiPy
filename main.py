@@ -27,8 +27,6 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
         # открыть диалог выбора директории и установить значение переменной
         # равной пути к выбранной директории
-        # check_item = QtWidgets.QListWidgetItem()
-        # check_item.setCheckState(QtCore.Qt.Checked)
 
         # перебор элементов в окне выбора файлов
         item_text_list = [str(self.listWidgetChoose.item(i).text()) for i in range(self.listWidgetChoose.count())]
@@ -38,27 +36,19 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
             QMessageBox.information(self, 'Внимание', f'Ранее каталог {directory} был добавлен', QMessageBox.Ok)
         else:
             # Создаем иконки для каталога
-            item = QtWidgets.QListWidgetItem()
-            icon = QIcon('./icons/dir.png')
-            item.setIcon(icon)
-            item.setText(directory)
+            item = icons('./icons/dir.png', directory)
             self.listWidgetChoose.addItem(item)
 
         # Вывести в окно все файлы и папки рекурсивно
         for dirpath, dirnames, filenames in os.walk(directory):
-
             # перебрать каталоги
             for dir_name in dirnames:
-
                 dir_res = os.path.join(dirpath, dir_name)
                 if dir_res in item_text_list:
                     QMessageBox.information(self, 'Внимание', f'Ранее каталог {dir_res} был добавлен', QMessageBox.Ok)
                 else:
                     # Создаем иконки для каталогов
-                    item = QtWidgets.QListWidgetItem()
-                    icon = QIcon('./icons/dir.png')
-                    item.setIcon(icon)
-                    item.setText(dir_res)
+                    item = icons('./icons/dir.png', dir_res)
                     self.listWidgetChoose.addItem(item)
 
             # перебрать файлы
@@ -68,10 +58,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                     QMessageBox.information(self, 'Внимание', f'Ранее файл {file} был добавлен', QMessageBox.Ok)
                 else:
                     # Создаем иконки для файлов
-                    item = QtWidgets.QListWidgetItem()
-                    icon = QIcon('./icons/file.png')
-                    item.setIcon(icon)
-                    item.setText(file)
+                    item = icons('./icons/file.png', file)
                     self.listWidgetChoose.addItem(item)
 
     # Функция выбора файла
@@ -86,20 +73,26 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                 QMessageBox.information(self, 'Внимание', f'Ранее файл {file} был добавлен', QMessageBox.Ok)
             else:
                 # Создаем иконки для файлов
-                item = QtWidgets.QListWidgetItem()
-                icon = QIcon('./icons/file.png')
-                item.setIcon(icon)
-                item.setText(file)
+                item = icons('./icons/file.png', file)
                 self.listWidgetChoose.addItem(item)  # выводим название файла и полный его путь с иконкой
 
     # Функция удаления файлов из списка
     def delete_item(self):
-        list_items = self.listWidgetChoose.selectedItems()
-        if not list_items:
-            QMessageBox.information(self, 'Внимание', f'Вы не выбрали файл для удаления! Повторите попытку',
-                                    QMessageBox.Ok)
-        for item in list_items:
-            self.listWidgetChoose.takeItem(self.listWidgetChoose.row(item))
+        for rows in range(self.listWidgetChoose.count()):
+            print(rows)
+            item_checked = self.listWidgetChoose.item(rows).checkState()
+            #print(item)
+            #print(item.checkState())  # 0 на неотмеченных
+            if item_checked == QtCore.Qt.CheckState.Unchecked:
+                print("No")
+                self.listWidgetChoose.takeItem(self.listWidgetChoose.)
+
+        # list_items = self.listWidgetChoose.selectedItems()
+        # if not list_items:
+        #     QMessageBox.information(self, 'Внимание', f'Вы не выбрали файл для удаления! Повторите попытку',
+        #                             QMessageBox.Ok)
+        # for item in list_items:
+        #     self.listWidgetChoose.takeItem(self.listWidgetChoose.row(item))
 
     def control_files(self):
         item_text_list = [str(self.listWidgetChoose.item(i).text()) for i in
@@ -110,18 +103,12 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
 
             if os.path.exists(file) and os.path.isfile(file):
                 file_hash = hash_file(file)
-                item = QtWidgets.QListWidgetItem()
-                icon = QIcon('./icons/file.png')
-                item.setIcon(icon)
-                item.setText(file)
+                item = icons('./icons/file.png', file)
                 self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
                 print(file, file_hash)
             elif os.path.exists(file) and os.path.isdir(file):
                 dir_hash = hash_dir(file)
-                item = QtWidgets.QListWidgetItem()
-                icon = QIcon('./icons/dir.png')
-                item.setIcon(icon)
-                item.setText(file)
+                item = icons('./icons/dir.png', file)
                 self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
                 print(file, dir_hash)
             else:
@@ -129,6 +116,16 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                                         f'Вы не добавили файлы для контроля целостности! Повторите попытку',
                                         QMessageBox.Ok)
 
+
+# Функция для вывода иконок и checkbox у файлов
+def icons(picture, file):
+    # Создаем иконки для файлов
+    item = QtWidgets.QListWidgetItem()  # определение item в QListWidget
+    icon = QIcon(picture)  # добавляем иконку
+    item.setIcon(icon)
+    item.setCheckState(QtCore.Qt.Checked)  # устанавливаем checkbox (True)
+    item.setText(file)
+    return item
 
 
 # Функция для получения хеш-суммы файла
