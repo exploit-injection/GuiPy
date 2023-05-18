@@ -1,5 +1,6 @@
 import sys  # sys нужен для передачи argv в QApplication
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMessageBox
 
 import control  # конвертированный файл дизайна
@@ -61,7 +62,12 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
             if file in itemtextlist:
                 QMessageBox.information(self, 'Внимание', f'Ранее файл {file} был добавлен', QMessageBox.Ok)
             else:
-                self.listWidgetChoose.addItem(file)  # выводим название файла и полный его путь
+                # Создаем иконки для файлов
+                item = QtWidgets.QListWidgetItem()
+                icon = QIcon('./icons/file.png')
+                item.setIcon(icon)
+                item.setText(file)
+                self.listWidgetChoose.addItem(item)  # выводим название файла и полный его путь
 
     # Функция удаления файлов из списка
     def delete_item(self):
