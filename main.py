@@ -2,7 +2,7 @@ import hashlib
 import os  # для отображения содержимого директории
 import sys  # sys нужен для передачи argv в QApplication
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMessageBox
 
@@ -27,6 +27,8 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
         # открыть диалог выбора директории и установить значение переменной
         # равной пути к выбранной директории
+        # check_item = QtWidgets.QListWidgetItem()
+        # check_item.setCheckState(QtCore.Qt.Checked)
 
         # перебор элементов в окне выбора файлов
         item_text_list = [str(self.listWidgetChoose.item(i).text()) for i in range(self.listWidgetChoose.count())]
@@ -35,7 +37,12 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         if directory in item_text_list:
             QMessageBox.information(self, 'Внимание', f'Ранее каталог {directory} был добавлен', QMessageBox.Ok)
         else:
-            self.listWidgetChoose.addItem(directory)
+            # Создаем иконки для каталога
+            item = QtWidgets.QListWidgetItem()
+            icon = QIcon('./icons/dir.png')
+            item.setIcon(icon)
+            item.setText(directory)
+            self.listWidgetChoose.addItem(item)
 
         # Вывести в окно все файлы и папки рекурсивно
         for dirpath, dirnames, filenames in os.walk(directory):
@@ -47,7 +54,12 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                 if dir_res in item_text_list:
                     QMessageBox.information(self, 'Внимание', f'Ранее каталог {dir_res} был добавлен', QMessageBox.Ok)
                 else:
-                    self.listWidgetChoose.addItem(dir_res)
+                    # Создаем иконки для каталогов
+                    item = QtWidgets.QListWidgetItem()
+                    icon = QIcon('./icons/dir.png')
+                    item.setIcon(icon)
+                    item.setText(dir_res)
+                    self.listWidgetChoose.addItem(item)
 
             # перебрать файлы
             for file_name in filenames:
@@ -55,7 +67,12 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                 if file in item_text_list:
                     QMessageBox.information(self, 'Внимание', f'Ранее файл {file} был добавлен', QMessageBox.Ok)
                 else:
-                    self.listWidgetChoose.addItem(file)
+                    # Создаем иконки для файлов
+                    item = QtWidgets.QListWidgetItem()
+                    icon = QIcon('./icons/file.png')
+                    item.setIcon(icon)
+                    item.setText(file)
+                    self.listWidgetChoose.addItem(item)
 
     # Функция выбора файла
     def choose_file(self):
@@ -87,18 +104,31 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
     def control_files(self):
         item_text_list = [str(self.listWidgetChoose.item(i).text()) for i in
                           range(self.listWidgetChoose.count())]  # перебор элементов в окне выбора файлов
-        print(item_text_list)
-        for item in item_text_list:
-            if os.path.exists(item) and os.path.isfile(item):
-                file_hash = hash_file(item)
-                print(item, file_hash)
-            elif os.path.exists(item) and os.path.isdir(item):
-                dir_hash = hash_dir(item)
-                print(item, dir_hash)
+        self.listWidgetControl.clear()  # очищение поля "Файлы на КЦ"
+        # print(item_text_list)
+        for file in item_text_list:
+
+            if os.path.exists(file) and os.path.isfile(file):
+                file_hash = hash_file(file)
+                item = QtWidgets.QListWidgetItem()
+                icon = QIcon('./icons/file.png')
+                item.setIcon(icon)
+                item.setText(file)
+                self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
+                print(file, file_hash)
+            elif os.path.exists(file) and os.path.isdir(file):
+                dir_hash = hash_dir(file)
+                item = QtWidgets.QListWidgetItem()
+                icon = QIcon('./icons/dir.png')
+                item.setIcon(icon)
+                item.setText(file)
+                self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
+                print(file, dir_hash)
             else:
                 QMessageBox.information(self, 'Внимание',
                                         f'Вы не добавили файлы для контроля целостности! Повторите попытку',
                                         QMessageBox.Ok)
+
 
 
 # Функция для получения хеш-суммы файла
