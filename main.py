@@ -1,11 +1,12 @@
 import hashlib
+import os  # для отображения содержимого директории
 import sys  # sys нужен для передачи argv в QApplication
-from PyQt5 import QtWidgets, QtGui
+
+from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMessageBox
 
 import control  # конвертированный файл дизайна
-import os  # для отображения содержимого директории
 
 
 class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
@@ -42,11 +43,11 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
             # перебрать каталоги
             for dir_name in dirnames:
 
-                dir = os.path.join(dirpath, dir_name)
-                if dir in item_text_list:
-                    QMessageBox.information(self, 'Внимание', f'Ранее каталог {dir} был добавлен', QMessageBox.Ok)
+                dir_res = os.path.join(dirpath, dir_name)
+                if dir_res in item_text_list:
+                    QMessageBox.information(self, 'Внимание', f'Ранее каталог {dir_res} был добавлен', QMessageBox.Ok)
                 else:
-                    self.listWidgetChoose.addItem(dir)
+                    self.listWidgetChoose.addItem(dir_res)
 
             # перебрать файлы
             for file_name in filenames:
@@ -121,13 +122,11 @@ def hash_dir(dir_path):
     for dirpath, dirnames, filenames in os.walk(dir_path):
         # перебрать каталоги
         for dirname in dirnames:
-            print("Каталог: ", os.path.join(dirpath, dirname))
+            os.path.join(dirpath, dirname)  # формируем полный путь и название директории
         # перебрать файлы
         for filename in filenames:
-            print("Файл: ", os.path.join(dirpath, filename))
-            message = hash_file(os.path.join(dirpath, filename))
-            print("Хеш-сумма: ", message)
-            dir_hash += message
+            message = hash_file(os.path.join(dirpath, filename))  # хешируем файлы, найденные в каталоге
+            dir_hash += message  # складываем хеш-суммы файлов
     return hashlib.sha256(dir_hash.encode('utf8')).hexdigest()
 
 

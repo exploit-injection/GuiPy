@@ -23,7 +23,7 @@ def hash_file(file_name):
 dir_hash = ''
 
 #  Распечатать все файлы и папки рекурсивно
-for dirpath, dirnames, filenames in os.walk("/home/spi_729-1/Документы/Test/"):
+for dirpath, dirnames, filenames in os.walk("/home/spi_729-1/Документы/Test"):
     # перебрать каталоги
     for dirname in dirnames:
         print("Каталог: ", os.path.join(dirpath, dirname))
