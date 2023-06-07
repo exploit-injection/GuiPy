@@ -20,8 +20,9 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         self.btnChoosefile.clicked.connect(
             self.choose_file)  # инициализация для метода по нажатию кнопки "Добавить файлы"
         self.btnDel.clicked.connect(self.delete_item)  # инициализация для метода по нажатию кнопки "Удалить файлы"
-        self.btnControl.clicked.connect(self.control_files)  # инициализация для метода по нажатию кнопки "Добавить на КЦ"
-        self.pushButton_3.clicked.connect(self.check_files) # инициализация для метода по нажатию кнопки "Проверить КЦ"
+        self.btnControl.clicked.connect(
+            self.control_files)  # инициализация для метода по нажатию кнопки "Добавить на КЦ"
+        self.pushButton_3.clicked.connect(self.check_files)  # инициализация для метода по нажатию кнопки "Проверить КЦ"
 
     # Функция для выбора каталога
     def choose_dir(self):
@@ -101,7 +102,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                 if item_selected is None:
                     self.listWidgetChoose.takeItem(rows)
                 elif item_selected.checkState() == QtCore.Qt.Unchecked:
-                        self.listWidgetChoose.takeItem(rows)
+                    self.listWidgetChoose.takeItem(rows)
             check = check + 1
 
     def control_files(self):
@@ -110,33 +111,55 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         self.listWidgetControl.clear()  # очищение поля "Файлы на КЦ"
         # print(item_text_list)
         try:
+            #  запись в файл данных
             with open("out.txt", "w") as files_control:
+                list_files = []
                 for file in item_text_list:
                     if os.path.exists(file) and os.path.isfile(file):
                         file_hash = hash_file(file)
                         item = icons('./icons/file.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
-                        file_tuple = (file, file_hash)
-                        print(file_tuple)
-                        files_control.write(f"{file_tuple}\n")
+                        print(file, file_hash)
+
+                        list_files.append(f"{file}, {file_hash}")  # Добавление файла в список файлов
+                        # print(list_files)
+                        files_control.write(f"{file}, {file_hash}\n")  # Запись данных в файл
                     elif os.path.exists(file) and os.path.isdir(file):
                         dir_hash = hash_dir(file)
                         item = icons('./icons/dir.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
-                        dir_tuple = (file, dir_hash)
-                        print(dir_tuple)
-                        files_control.write(f"{dir_tuple}\n")
+                        print(file, dir_hash)
+
+                        list_files.append(f"{file}, {dir_hash}")  # Добавление директории в список файлов
+                        # print(list_files)
+                        files_control.write(f"{file}, {dir_hash}\n")  # Запись данных в файл
                     else:
                         QMessageBox.information(self, 'Внимание',
                                                 f'Вы не добавили файлы для контроля целостности! Повторите попытку',
                                                 QMessageBox.Ok)
+                tuple_files = tuple(list_files)
+                return tuple_files
         except:
             QMessageBox.information(self, 'Внимание', 'Ошибка при работе с файлом!', QMessageBox.Ok)
 
     def check_files(self):
         file = read_files("out.txt")
+        tuple_file = self.control_files()
         print(file)
         print(type(file))
+        print(tuple_file)
+        spisok = [i for i in file]
+        count = len(spisok)
+        for item in range(count):
+            if file[item] != tuple_file[item]:
+                file_str = str(file[item])
+                file_res_tuple = tuple(str(item) for item in file_str.split(',') if item != '')
+                name_path_file, sha_hash = file_res_tuple
+                QMessageBox.critical(self, 'Ошибка', f"Нарушение контроля целостности! Был изменен файл {name_path_file}.", QMessageBox.Ok)
+            else:
+                QMessageBox.information(self, 'Внимание', 'Контроль целостности выбранных файлов не был нарушен', QMessageBox.Ok)
+
+
 
 
 
@@ -182,15 +205,15 @@ def hash_dir(dir_path):
 
 def read_files(files):
     file_main = open(files, "r")
-    return file_main.read()
-
+    file_string = file_main.read()
+    file_tuple = tuple(str(item) for item in file_string.split('\n') if item != '')  # разделила файлы по табуляции
+    return file_tuple
 
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
     window = ExampleApp()  # Создаём объект класса ExampleApp
     window.show()  # Показываем окно
-    widget = QtWidgets.QWidget
     app.exec_()  # и запускаем приложение
 
 
