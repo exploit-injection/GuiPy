@@ -79,8 +79,22 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
 
     # Функция удаления файлов из списка
     def delete_item(self):
-        count_items = self.listWidgetChoose.count()
+        count_items = self.listWidgetChoose.count()  # Находим кол-во элементов в QListWidget
+        # Проверка на заполнение QListWidget
+        if count_items == 0:
+            QMessageBox.information(self, 'Внимание', 'Список файлов пуст!', QMessageBox.Ok)
+
         check = 0
+        # Если не выбраны файлы для удаления - вывод сообщения
+        for rows in range(count_items):  # от 0 до 2
+            item_selected = self.listWidgetChoose.item(rows)
+            if item_selected.checkState() == QtCore.Qt.Checked:
+                check = check + 1
+        #  Сравнение check с кол-ом элементов в QListWidget
+        if check == count_items and count_items != 0:
+            QMessageBox.information(self, 'Внимание', 'Вы не выбрали файлы для удаления!', QMessageBox.Ok)
+
+        #  Удаление всех выбранных элементов (не установлен checkbox)
         while check != count_items:
             for rows in range(count_items):  # от 0 до 2
                 item_selected = self.listWidgetChoose.item(rows)
