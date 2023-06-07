@@ -80,42 +80,16 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
     # Функция удаления файлов из списка
     def delete_item(self):
         count_items = self.listWidgetChoose.count()
-        print(count_items)
-        for rows in range(count_items):  # от 0 до 2
-            item_selected = self.listWidgetChoose.item(rows)
-            print("ряд = ", rows)  # int ряд 0
-            #print("item_selected = ", item_selected.text())  # item[0], item[1] и тд <PyQt5.QtWidgets.QListWidgetItem object at 0x7f925a51e5f0>
-            if item_selected is None:
-                self.listWidgetChoose.takeItem(rows)
-            elif item_selected.checkState() == QtCore.Qt.Unchecked:
-                    print("Здесь нет галочки!!")
+        check = 0
+        while check != count_items:
+            for rows in range(count_items):  # от 0 до 2
+                item_selected = self.listWidgetChoose.item(rows)
+                if item_selected is None:
                     self.listWidgetChoose.takeItem(rows)
-        #     print("тип item_selected = ", type(item_selected))  # <class 'PyQt5.QtCore.Qt.CheckState'>
-        #     if item_selected.checkState() == QtCore.Qt.Unchecked:
-        #         print("NO")
-        #         res = self.listWidgetChoose.row(item_selected)
-        #         print("res = ", res)
-        #         self.listWidgetChoose.takeItem(res)
-        #     else:
-        #         continue
-        # print("Цикл")
+                elif item_selected.checkState() == QtCore.Qt.Unchecked:
+                        self.listWidgetChoose.takeItem(rows)
+            check = check + 1
 
-            # item_int_check = int(item_checked)
-            # print(type(item_int_check))
-            # #print(item)
-            # #print(item.checkState())  # 0 на неотмеченных
-            # if item_int_check == 0:
-            #     print("No")
-            #     self.listWidgetChoose.takeItem(self.listWidgetChoose.row(item_selected))
-            #     print(item_checked)
-                #self.listWidgetChoose.takeItem(rows)
-
-        # list_items = self.listWidgetChoose.selectedItems()
-        # if not list_items:
-        #     QMessageBox.information(self, 'Внимание', f'Вы не выбрали файл для удаления! Повторите попытку',
-        #                             QMessageBox.Ok)
-        # for item in list_items:
-        #     self.listWidgetChoose.takeItem(self.listWidgetChoose.row(item))
 
     def control_files(self):
         item_text_list = [str(self.listWidgetChoose.item(i).text()) for i in
