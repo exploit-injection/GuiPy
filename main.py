@@ -20,7 +20,8 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         self.btnChoosefile.clicked.connect(
             self.choose_file)  # инициализация для метода по нажатию кнопки "Добавить файлы"
         self.btnDel.clicked.connect(self.delete_item)  # инициализация для метода по нажатию кнопки "Удалить файлы"
-        self.btnControl.clicked.connect(self.control_files)
+        self.btnControl.clicked.connect(self.control_files)  # инициализация для метода по нажатию кнопки "Добавить на КЦ"
+        self.pushButton_3.clicked.connect(self.check_files) # инициализация для метода по нажатию кнопки "Проверить КЦ"
 
     # Функция для выбора каталога
     def choose_dir(self):
@@ -115,20 +116,27 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                         file_hash = hash_file(file)
                         item = icons('./icons/file.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
-                        print(file, file_hash)
-                        files_control.write(f"{file}  {file_hash}\n")
+                        file_tuple = (file, file_hash)
+                        print(file_tuple)
+                        files_control.write(f"{file_tuple}\n")
                     elif os.path.exists(file) and os.path.isdir(file):
                         dir_hash = hash_dir(file)
                         item = icons('./icons/dir.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
-                        print(file, dir_hash)
-                        files_control.write(f"{file}  {dir_hash}\n")
+                        dir_tuple = (file, dir_hash)
+                        print(dir_tuple)
+                        files_control.write(f"{dir_tuple}\n")
                     else:
                         QMessageBox.information(self, 'Внимание',
                                                 f'Вы не добавили файлы для контроля целостности! Повторите попытку',
                                                 QMessageBox.Ok)
         except:
             QMessageBox.information(self, 'Внимание', 'Ошибка при работе с файлом!', QMessageBox.Ok)
+
+    def check_files(self):
+        file = read_files("out.txt")
+        print(file)
+        print(type(file))
 
 
 
@@ -170,6 +178,12 @@ def hash_dir(dir_path):
             message = hash_file(os.path.join(dirpath, filename))  # хешируем файлы, найденные в каталоге
             dir_hash += message  # складываем хеш-суммы файлов
     return hashlib.sha256(dir_hash.encode('utf8')).hexdigest()
+
+
+def read_files(files):
+    file_main = open(files, "r")
+    return file_main.read()
+
 
 
 def main():
