@@ -148,8 +148,8 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         print(file)
         print(type(file))
         print(tuple_file)
-        spisok = [i for i in file]
-        count = len(spisok)
+        list_in_out_files = [i for i in file]
+        count = len(list_in_out_files)
         for item in range(count):
             if file[item] != tuple_file[item]:
                 file_str = str(file[item])
