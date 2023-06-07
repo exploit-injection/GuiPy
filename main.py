@@ -3,10 +3,9 @@ import os  # для отображения содержимого директо
 import sys  # sys нужен для передачи argv в QApplication
 
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMessageBox, QListWidgetItem, QCheckBox, QWidget
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QCheckBox
+from PyQt5.QtWidgets import QMessageBox
+
 import control  # конвертированный файл дизайна
 
 
@@ -25,7 +24,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
 
     # Функция для выбора каталога
     def choose_dir(self):
-        directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку")
+        directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите папку", '/home/spi_729-1/Документы')
         # открыть диалог выбора директории и установить значение переменной
         # равной пути к выбранной директории
 
@@ -104,28 +103,33 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                         self.listWidgetChoose.takeItem(rows)
             check = check + 1
 
-
     def control_files(self):
         item_text_list = [str(self.listWidgetChoose.item(i).text()) for i in
                           range(self.listWidgetChoose.count())]  # перебор элементов в окне выбора файлов
         self.listWidgetControl.clear()  # очищение поля "Файлы на КЦ"
         # print(item_text_list)
-        for file in item_text_list:
+        try:
+            with open("out.txt", "w") as files_control:
+                for file in item_text_list:
+                    if os.path.exists(file) and os.path.isfile(file):
+                        file_hash = hash_file(file)
+                        item = icons('./icons/file.png', file)
+                        self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
+                        print(file, file_hash)
+                        files_control.write(f"{file}  {file_hash}\n")
+                    elif os.path.exists(file) and os.path.isdir(file):
+                        dir_hash = hash_dir(file)
+                        item = icons('./icons/dir.png', file)
+                        self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
+                        print(file, dir_hash)
+                        files_control.write(f"{file}  {dir_hash}\n")
+                    else:
+                        QMessageBox.information(self, 'Внимание',
+                                                f'Вы не добавили файлы для контроля целостности! Повторите попытку',
+                                                QMessageBox.Ok)
+        except:
+            QMessageBox.information(self, 'Внимание', 'Ошибка при работе с файлом!', QMessageBox.Ok)
 
-            if os.path.exists(file) and os.path.isfile(file):
-                file_hash = hash_file(file)
-                item = icons('./icons/file.png', file)
-                self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
-                print(file, file_hash)
-            elif os.path.exists(file) and os.path.isdir(file):
-                dir_hash = hash_dir(file)
-                item = icons('./icons/dir.png', file)
-                self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
-                print(file, dir_hash)
-            else:
-                QMessageBox.information(self, 'Внимание',
-                                        f'Вы не добавили файлы для контроля целостности! Повторите попытку',
-                                        QMessageBox.Ok)
 
 
 # Функция для вывода иконок и checkbox у файлов
