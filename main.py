@@ -1,6 +1,9 @@
 import hashlib
 import os  # для отображения содержимого директории
+import shutil
 import sys  # sys нужен для передачи argv в QApplication
+import time
+import zipfile
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QIcon
@@ -109,7 +112,9 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         item_text_list = [str(self.listWidgetChoose.item(i).text()) for i in
                           range(self.listWidgetChoose.count())]  # перебор элементов в окне выбора файлов
         self.listWidgetControl.clear()  # очищение поля "Файлы на КЦ"
-        # print(item_text_list)
+        timestr = time.strftime('%Y%m%d-%H%M%S')
+        target = '/home/spi_729-1/Документы/Backup-{}.zip'.format(timestr)
+        directory2 = '/home/spi_729-1/Документы'
         try:
             #  запись в файл данных
             with open("out.txt", "w") as files_control:
@@ -117,21 +122,23 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                 for file in item_text_list:
                     if os.path.exists(file) and os.path.isfile(file):
                         file_hash = hash_file(file)
+                        directory = os.path.dirname(file)  # определяем директорию, в которой расположен файл
+                        print("directory = ", directory)
                         item = icons('./icons/file.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
                         print(file, file_hash)
 
                         list_files.append(f"{file}, {file_hash}")  # Добавление файла в список файлов
-                        # print(list_files)
                         files_control.write(f"{file}, {file_hash}\n")  # Запись данных в файл
+                        shutil.copy2(file, target)
                     elif os.path.exists(file) and os.path.isdir(file):
+                        backup(file, target)
                         dir_hash = hash_dir(file)
                         item = icons('./icons/dir.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
                         print(file, dir_hash)
 
                         list_files.append(f"{file}, {dir_hash}")  # Добавление директории в список файлов
-                        # print(list_files)
                         files_control.write(f"{file}, {dir_hash}\n")  # Запись данных в файл
                     else:
                         QMessageBox.information(self, 'Внимание',
@@ -151,14 +158,16 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         list_in_out_files = [i for i in file]
         count = len(list_in_out_files)
         for item in range(count):
+            file_str = str(file[item])
+            file_res_tuple = tuple(str(item) for item in file_str.split(',') if item != '')
+            name_path_file, sha_hash = file_res_tuple
             if file[item] != tuple_file[item]:
-                file_str = str(file[item])
-                file_res_tuple = tuple(str(item) for item in file_str.split(',') if item != '')
-                name_path_file, sha_hash = file_res_tuple
-                QMessageBox.critical(self, 'Ошибка', f"Нарушение контроля целостности! Был изменен файл {name_path_file}.", QMessageBox.Ok)
+                item_res_er = icons('./icons/error.png', f"Нарушение КЦ файла {name_path_file}")
+                self.listWidgetOutput.addItem(item_res_er)
             else:
-                QMessageBox.information(self, 'Внимание', 'Контроль целостности выбранных файлов не был нарушен', QMessageBox.Ok)
-
+                item_res_suc = icons('./icons/success.png', f"КЦ файла {name_path_file} не нарушен")
+                self.listWidgetOutput.addItem(item_res_suc)
+        QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
 
 
 
@@ -209,6 +218,13 @@ def read_files(files):
     file_tuple = tuple(str(item) for item in file_string.split('\n') if item != '')  # разделила файлы по табуляции
     return file_tuple
 
+
+def backup(source, target):
+    zip_file = zipfile.ZipFile(target, 'w')
+    for dirpath, dirnames, filenames in os.walk(source):
+        for filename in filenames:
+            zip_file.write(os.path.join(dirpath, filename))
+    zip_file.close()
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
