@@ -113,6 +113,11 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                           range(self.listWidgetChoose.count())]  # перебор элементов в окне выбора файлов
         self.listWidgetControl.clear()  # очищение поля "Файлы на КЦ"
         backup_file = '/home/spi_729-1/Документы/Backup'
+        if os.path.exists(backup_file):
+            shutil.rmtree(backup_file)
+            os.makedirs(backup_file)
+        else:
+            os.makedirs(backup_file)
         # Добавление в файл для сравнения
         try:
             #  запись в файл данных
@@ -120,7 +125,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                 list_files = []
                 for file in item_text_list:
                     if os.path.exists(file) and os.path.isfile(file):
-                        backup(file, backup_file)
+                        shutil.copy2(file, backup_file) # резервное копирование файлов
                         file_hash = hash_file(file)
                         item = icons('./icons/file.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
@@ -128,7 +133,9 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                         list_files.append(f"{file}, {file_hash}")  # Добавление файла в список файлов
                         files_control.write(f"{file}, {file_hash}\n")  # Запись данных в файл
                     elif os.path.exists(file) and os.path.isdir(file):
-                        backup(file, backup_file)
+                        backup_file = f'/home/spi_729-1/Документы/Backup/{os.path.basename(file)}'
+                        # Проверка на существование файла для бэкапа
+                        shutil.copytree(file, backup_file)
                         dir_hash = hash_dir(file)
                         item = icons('./icons/dir.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
@@ -137,13 +144,16 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                         list_files.append(f"{file}, {dir_hash}")  # Добавление директории в список файлов
                         files_control.write(f"{file}, {dir_hash}\n")  # Запись данных в файл
                     else:
+                        files_control.close()
                         QMessageBox.information(self, 'Внимание',
                                                 f'Вы не добавили файлы для контроля целостности! Повторите попытку',
                                                 QMessageBox.Ok)
                 tuple_files = tuple(list_files)
                 return tuple_files
-        except:
+        except Exception as e:
             QMessageBox.information(self, 'Внимание', 'Ошибка при работе с файлом!', QMessageBox.Ok)
+            print("Ошибка", str(e))
+
 
 
 
@@ -151,23 +161,23 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
 
     def check_files(self):
         file = read_files("out.txt")
-        tuple_file = self.control_files()
-        print(file)
-        print(type(file))
-        print(tuple_file)
-        list_in_out_files = [i for i in file]
-        count = len(list_in_out_files)
-        for item in range(count):
-            file_str = str(file[item])
-            file_res_tuple = tuple(str(item) for item in file_str.split(',') if item != '')
-            name_path_file, sha_hash = file_res_tuple
-            if file[item] != tuple_file[item]:
-                item_res_er = icons('./icons/error.png', f"Нарушение КЦ файла {name_path_file}")
-                self.listWidgetOutput.addItem(item_res_er)
-            else:
-                item_res_suc = icons('./icons/success.png', f"КЦ файла {name_path_file} не нарушен")
-                self.listWidgetOutput.addItem(item_res_suc)
-        QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
+        # tuple_file = self.control_files()
+        # print(file)
+        # print(type(file))
+        # print(tuple_file)
+        # list_in_out_files = [i for i in file]
+        # count = len(list_in_out_files)
+        # for item in range(count):
+        #     file_str = str(file[item])
+        #     file_res_tuple = tuple(str(item) for item in file_str.split(',') if item != '')
+        #     name_path_file, sha_hash = file_res_tuple
+        #     if file[item] != tuple_file[item]:
+        #         item_res_er = icons('./icons/error.png', f"Нарушение КЦ файла {name_path_file}")
+        #         self.listWidgetOutput.addItem(item_res_er)
+        #     else:
+        #         item_res_suc = icons('./icons/success.png', f"КЦ файла {name_path_file} не нарушен")
+        #         self.listWidgetOutput.addItem(item_res_suc)
+        # QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
 
 
 
@@ -219,37 +229,20 @@ def read_files(files):
     return file_tuple
 
 
-def backup(source_file, backup_file):
-    if os.path.isfile(source_file):
-        # Если исходный файл является файлом, то просто копируем его в архив
-        try:
-            with zipfile.ZipFile(backup_file, 'w') as myZip:
-                myZip.write(source_file, compress_type=zipfile.ZIP_DEFLATED)
-                print("Резервная копия создана успешно!")
-        except Exception as e:
-            print("Ошибка при создании резервной копии. Подробности: ", str(e))
-    # Правильное добавление каталога
-    elif os.path.isdir(source_file):
-        # Если исходный файл является каталогом, то рекурсивно перебираем все файлы в нем и добавляем их в архив
-        try:
-            with zipfile.ZipFile(backup_file, 'w') as myZip:
-                for foldername, subfolders, filenames in os.walk(source_file):
-                    for filename in filenames:
-                        # Получаем путь к файлу
-                        filePath = os.path.join(foldername, filename)
+def backup(source, backup_file):
+    try:
+        with open(backup_file, 'w') as myBack:
+            for dirpath, dirnames, filenames in os.walk(source):
+                # перебрать каталоги
+                for dir_name in dirnames:
+                    dir_res = os.path.join(dirpath, dir_name)
+                    # Добавляем файл в архив
+                    myBack.write(dir_res)
+        print("Резервная копия создана успешно!")
+    except Exception as e:
+        print("Ошибка при создании резервной копии. Подробности: ", str(e))
 
-                        # Получаем путь к файлу относительно каталога для копирования
-                        relativePath = os.path.relpath(filePath, source_file)
 
-                        # Добавляем файл в архив
-                        myZip.write(filePath, arcname=os.path.join(os.path.basename(source_file), relativePath),
-                                    compress_type=zipfile.ZIP_DEFLATED)
-            print("Резервная копия создана успешно!")
-        except Exception as e:
-            print("Ошибка при создании резервной копии. Подробности: ", str(e))
-
-    else:
-        print("Ошибка: файл или каталог не существует.")
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
