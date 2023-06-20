@@ -113,6 +113,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                           range(self.listWidgetChoose.count())]  # перебор элементов в окне выбора файлов
         self.listWidgetControl.clear()  # очищение поля "Файлы на КЦ"
         backup_file = '/home/spi_729-1/Документы/Backup'
+        # Добавление в файл для сравнения
         try:
             #  запись в файл данных
             with open("out.txt", "w") as files_control:
@@ -142,6 +143,10 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                 return tuple_files
         except:
             QMessageBox.information(self, 'Внимание', 'Ошибка при работе с файлом!', QMessageBox.Ok)
+
+
+
+
 
     def check_files(self):
         file = read_files("out.txt")
@@ -216,13 +221,15 @@ def read_files(files):
 def backup(source_file, backup_file):
     if os.path.isfile(source_file):
         # Если исходный файл является файлом, то просто копируем его в архив
+        base_name = os.path.split(source_file)[0]  # Получаем имя файла без расширения
+        backup_file_new = os.path.join(os.path.dirname(source_file), backup_file)
         try:
-            with zipfile.ZipFile(backup_file, 'w') as myZip:
-                myZip.write(source_file, os.path.basename(source_file), compress_type=zipfile.ZIP_DEFLATED)
+            with zipfile.ZipFile(backup_file_new, 'w', zipfile.ZIP_DEFLATED) as myZip:
+                myZip.write(source_file, os.path.basename(base_name))
             print("Резервная копия создана успешно!")
         except Exception as e:
             print("Ошибка при создании резервной копии. Подробности: ", str(e))
-
+    # Правильное добавление каталога
     elif os.path.isdir(source_file):
         # Если исходный файл является каталогом, то рекурсивно перебираем все файлы в нем и добавляем их в архив
         try:
