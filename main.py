@@ -120,6 +120,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                 list_files = []
                 for file in item_text_list:
                     if os.path.exists(file) and os.path.isfile(file):
+                        backup(file, backup_file)
                         file_hash = hash_file(file)
                         item = icons('./icons/file.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
@@ -221,12 +222,10 @@ def read_files(files):
 def backup(source_file, backup_file):
     if os.path.isfile(source_file):
         # Если исходный файл является файлом, то просто копируем его в архив
-        base_name = os.path.split(source_file)[0]  # Получаем имя файла без расширения
-        backup_file_new = os.path.join(os.path.dirname(source_file), backup_file)
         try:
-            with zipfile.ZipFile(backup_file_new, 'w', zipfile.ZIP_DEFLATED) as myZip:
-                myZip.write(source_file, os.path.basename(base_name))
-            print("Резервная копия создана успешно!")
+            with zipfile.ZipFile(backup_file, 'w') as myZip:
+                myZip.write(source_file, compress_type=zipfile.ZIP_DEFLATED)
+                print("Резервная копия создана успешно!")
         except Exception as e:
             print("Ошибка при создании резервной копии. Подробности: ", str(e))
     # Правильное добавление каталога
