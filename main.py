@@ -122,7 +122,6 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         try:
             #  запись в файл данных
             with open("out.txt", "w") as files_control:
-                list_files = []
                 for file in item_text_list:
                     if os.path.exists(file) and os.path.isfile(file):
                         shutil.copy2(file, backup_file) # резервное копирование файлов
@@ -130,7 +129,6 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                         item = icons('./icons/file.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
                         print(file, file_hash)
-                        list_files.append(f"{file}, {file_hash}")  # Добавление файла в список файлов
                         files_control.write(f"{file}, {file_hash}\n")  # Запись данных в файл
                     elif os.path.exists(file) and os.path.isdir(file):
                         backup_file = f'/home/spi_729-1/Документы/Backup/{os.path.basename(file)}'
@@ -140,16 +138,12 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                         item = icons('./icons/dir.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
                         print(file, dir_hash)
-
-                        list_files.append(f"{file}, {dir_hash}")  # Добавление директории в список файлов
                         files_control.write(f"{file}, {dir_hash}\n")  # Запись данных в файл
                     else:
                         files_control.close()
                         QMessageBox.information(self, 'Внимание',
                                                 f'Вы не добавили файлы для контроля целостности! Повторите попытку',
                                                 QMessageBox.Ok)
-                tuple_files = tuple(list_files)
-                return tuple_files
         except Exception as e:
             QMessageBox.information(self, 'Внимание', 'Ошибка при работе с файлом!', QMessageBox.Ok)
             print("Ошибка", str(e))
@@ -160,7 +154,45 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
 
 
     def check_files(self):
-        file = read_files("out.txt")
+        out_file = read_files("out.txt")
+        list_in_out_file = [i for i in out_file]  #  Список элементов в файде out.txt
+        item_text_list = [str(self.listWidgetControl.item(i).text()) for i in
+                          range(self.listWidgetControl.count())]  # перебор элементов в окне файлы на КЦ
+        list_files = []  # Список для файлов и их хешей
+        for file in item_text_list:
+            if os.path.exists(file) and os.path.isfile(file):
+                file_hash = hash_file(file)  # расчет хеша файлов в окне "Файлы на КЦ"
+                list_files.append(f"{file}, {file_hash}")  # Добавление файла в список файлов
+            elif os.path.exists(file) and os.path.isdir(file):
+                dir_hash = hash_dir(file)
+                list_files.append(f"{file}, {dir_hash}")  # Добавление директории в список файлов
+            else:
+                file = file
+                file_hash = 1
+                list_files.append(f"{file}, {file_hash}")  # Добавление файла в список файлов
+
+        print(f"Список файлов: {list_files}")
+        print(f"Список файлов в выходном файле: {list_in_out_file}")
+
+        count = len(list_in_out_file)
+        for item in range(count):
+            file_str = str(list_files[item])  # Перевод к строке элементов в новом списке файлов и хешей
+            file_res_tuple = tuple(str(item) for item in file_str.split(',') if item != '')  # Отделяем файлы и хеши в общем списке
+            name_path_file, sha_hash = file_res_tuple
+            if list_files[item] != list_in_out_file[item]:
+                if list_files[item] == f"{name_path_file}, 1":
+                    item_res_er = items_out_control('./icons/error.png', f"Нарушение КЦ файла {name_path_file}. Файл удален!", time)
+                    self.listWidgetOutput.addItem(item_res_er)
+                else:
+                    item_res_er = items_out_control('./icons/error.png', f"Нарушение КЦ файла {name_path_file}. Файл изменен!", time)
+                    self.listWidgetOutput.addItem(item_res_er)
+            else:
+                item_res_suc = items_out_control('./icons/success.png', f"КЦ файла {name_path_file} не нарушен", time)
+                self.listWidgetOutput.addItem(item_res_suc)
+
+        QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
+
+
         # tuple_file = self.control_files()
         # print(file)
         # print(type(file))
@@ -192,6 +224,14 @@ def icons(picture, file):
     item.setText(file)
     return item
 
+def items_out_control(picture, file, timestr):
+    # Создаем иконки для файлов
+    timestr = timestr.strftime("%d.%m.%Y  %H:%M:%S")
+    item = QtWidgets.QListWidgetItem()  # определение item в QListWidget
+    icon = QIcon(picture)  # добавляем иконку
+    item.setIcon(icon)
+    item.setText(f"{file}  Дата: {timestr}")
+    return item
 
 # Функция для получения хеш-суммы файла
 def hash_file(file_name):
@@ -228,19 +268,6 @@ def read_files(files):
     file_tuple = tuple(str(item) for item in file_string.split('\n') if item != '')  # разделила файлы по табуляции
     return file_tuple
 
-
-def backup(source, backup_file):
-    try:
-        with open(backup_file, 'w') as myBack:
-            for dirpath, dirnames, filenames in os.walk(source):
-                # перебрать каталоги
-                for dir_name in dirnames:
-                    dir_res = os.path.join(dirpath, dir_name)
-                    # Добавляем файл в архив
-                    myBack.write(dir_res)
-        print("Резервная копия создана успешно!")
-    except Exception as e:
-        print("Ошибка при создании резервной копии. Подробности: ", str(e))
 
 
 
