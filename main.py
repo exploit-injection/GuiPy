@@ -26,6 +26,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         self.btnControl.clicked.connect(
             self.control_files)  # инициализация для метода по нажатию кнопки "Добавить на КЦ"
         self.pushButton_3.clicked.connect(self.check_files)  # инициализация для метода по нажатию кнопки "Проверить КЦ"
+        self.btnRecovery.clicked.connect(self.recovery_files)  # инициализация для метода по нажатию кнопки "Проверить КЦ"
 
     # Функция для выбора каталога
     def choose_dir(self):
@@ -149,16 +150,13 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
             print("Ошибка", str(e))
 
 
-
-
-
-
-    def check_files(self):
+    def list_files(self):
+        # Функция формирует списки элементов для проверки
         out_file = read_files("out.txt")
-        list_in_out_file = [i for i in out_file]  #  Список элементов в файде out.txt
+        list_in_out_file = [i for i in out_file]  # Список элементов в файле out.txt
         item_text_list = [str(self.listWidgetControl.item(i).text()) for i in
                           range(self.listWidgetControl.count())]  # перебор элементов в окне файлы на КЦ
-        list_files = []  # Список для файлов и их хешей
+        list_files = []  # Список для файлов в поле "Добавлены на КЦ" и их хешей
         for file in item_text_list:
             if os.path.exists(file) and os.path.isfile(file):
                 file_hash = hash_file(file)  # расчет хеша файлов в окне "Файлы на КЦ"
@@ -173,7 +171,15 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
 
         print(f"Список файлов: {list_files}")
         print(f"Список файлов в выходном файле: {list_in_out_file}")
+        return list_files, list_in_out_file
 
+
+
+
+    def check_files(self):
+
+        list_res = self.list_files()  # Формируем список файлов для проверки
+        list_files, list_in_out_file = list_res  #  Отделяем сформированный список файлов от списка в out.txt
         count = len(list_in_out_file)
         for item in range(count):
             file_str = str(list_files[item])  # Перевод к строке элементов в новом списке файлов и хешей
@@ -192,24 +198,32 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
 
         QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
 
+    def recovery_files(self):
+        # Функция для восстановления файлов
 
-        # tuple_file = self.control_files()
-        # print(file)
-        # print(type(file))
-        # print(tuple_file)
-        # list_in_out_files = [i for i in file]
-        # count = len(list_in_out_files)
-        # for item in range(count):
-        #     file_str = str(file[item])
-        #     file_res_tuple = tuple(str(item) for item in file_str.split(',') if item != '')
-        #     name_path_file, sha_hash = file_res_tuple
-        #     if file[item] != tuple_file[item]:
-        #         item_res_er = icons('./icons/error.png', f"Нарушение КЦ файла {name_path_file}")
-        #         self.listWidgetOutput.addItem(item_res_er)
-        #     else:
-        #         item_res_suc = icons('./icons/success.png', f"КЦ файла {name_path_file} не нарушен")
-        #         self.listWidgetOutput.addItem(item_res_suc)
-        # QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
+        list_res = self.list_files()  # Формируем список файлов для проверки
+        list_files, list_in_out_file = list_res  # Отделяем сформированный список файлов от списка в out.txt
+        count = len(list_in_out_file)
+        backup_file = '/home/spi_729-1/Документы/Backup/'
+        for item in range(count):
+            file_str = str(list_files[item])  # Перевод к строке элементов в новом списке файлов и хешей
+            file_res_tuple = tuple(
+                str(item) for item in file_str.split(',') if item != '')  # Отделяем файлы и хеши в общем списке
+            name_path_file, sha_hash = file_res_tuple
+            if list_files[item] != list_in_out_file[item]:
+                if list_files[item] == f"{name_path_file}, 1":
+                    base_name = os.path.basename(name_path_file)
+                    print("basename", base_name)
+                    backup_file = search_file(base_name, backup_file)  # Найденный файл в каталоге Backup
+                    shutil.copy2(backup_file, name_path_file)  # Копирование файла в первоначальный каталог
+                    # if os.path.isfile(backup_file):
+                    #     print("Надо восстановить файл от удаления")
+                    # else:
+                    #     print("Надо восстановить каталог от удаления")
+                else:
+                    print("Надо восстановить измененные файлы")
+            else:
+                print("Все в порядке")
 
 
 
@@ -268,6 +282,10 @@ def read_files(files):
     file_tuple = tuple(str(item) for item in file_string.split('\n') if item != '')  # разделила файлы по табуляции
     return file_tuple
 
+def search_file(filename, directory):
+    for root, dirs, files in os.walk(directory):
+        if filename in files:
+            return os.path.join(root, filename)
 
 
 
