@@ -3,9 +3,10 @@ import os  # для отображения содержимого директо
 import shutil
 import sys  # sys нужен для передачи argv в QApplication
 import time
-import zipfile
+
 
 from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMessageBox
 
@@ -25,8 +26,20 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         self.btnDel.clicked.connect(self.delete_item)  # инициализация для метода по нажатию кнопки "Удалить файлы"
         self.btnControl.clicked.connect(
             self.control_files)  # инициализация для метода по нажатию кнопки "Добавить на КЦ"
+        self.timer = QTimer()
+        self.btnControl.clicked.connect(self.start_timer)  # Запуск таймера по нажатию кнопки "Добавить на КЦ"
+        self.timer.timeout.connect(self.check_files)  # подключили таймер к методу проверть КЦ
+        self.timer.setInterval(60000)
         self.pushButton_3.clicked.connect(self.check_files)  # инициализация для метода по нажатию кнопки "Проверить КЦ"
-        self.btnRecovery.clicked.connect(self.recovery_files)  # инициализация для метода по нажатию кнопки "Проверить КЦ"
+        self.btnChoosefile_2.clicked.connect(self.path_dir_choose)  # инициализация для метода по нажатию кнопки
+        # "Выбрать каталог"
+        self.btnfile_backup.clicked.connect(
+            self.path_file_choose)  # инициализация для метода по нажатию кнопки "Файл (backup)"
+        self.btndir_backup.clicked.connect(
+            self.path_dir2_choose)  # инициализация для метода по нажатию кнопки "Файл (backup)"
+        self.btnRecovery.clicked.connect(self.recovery_files)   # инициализация для метода по нажатию кнопки
+        # "Восстановить"
+        self.pushButton.clicked.connect(self.stop_timer)  # инициализация для метода по нажатию кнопки
 
     # Функция для выбора каталога
     def choose_dir(self):
@@ -84,31 +97,37 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
 
     # Функция удаления файлов из списка
     def delete_item(self):
-        count_items = self.listWidgetChoose.count()  # Находим кол-во элементов в QListWidget
-        # Проверка на заполнение QListWidget
-        if count_items == 0:
-            QMessageBox.information(self, 'Внимание', 'Список файлов пуст!', QMessageBox.Ok)
+        try:
+            count_items = self.listWidgetChoose.count()  # Находим кол-во элементов в QListWidget
+            # Проверка на заполнение QListWidget
+            if count_items == 0:
+                QMessageBox.information(self, 'Внимание', 'Список файлов пуст!', QMessageBox.Ok)
 
-        check = 0
-        # Если не выбраны файлы для удаления - вывод сообщения
-        for rows in range(count_items):  # от 0 до 2
-            item_selected = self.listWidgetChoose.item(rows)
-            if item_selected.checkState() == QtCore.Qt.Checked:
-                check = check + 1
-        #  Сравнение check с кол-ом элементов в QListWidget
-        if check == count_items and count_items != 0:
-            QMessageBox.information(self, 'Внимание', 'Вы не выбрали файлы для удаления!', QMessageBox.Ok)
-
-        #  Удаление всех выбранных элементов (не установлен checkbox)
-        while check != count_items:
+            check = 0
+            # Если не выбраны файлы для удаления - вывод сообщения
             for rows in range(count_items):  # от 0 до 2
                 item_selected = self.listWidgetChoose.item(rows)
-                if item_selected is None:
-                    self.listWidgetChoose.takeItem(rows)
-                elif item_selected.checkState() == QtCore.Qt.Unchecked:
-                    self.listWidgetChoose.takeItem(rows)
-            check = check + 1
+                if item_selected.checkState() == QtCore.Qt.Checked:
+                    check = check + 1
+            #  Сравнение check с кол-ом элементов в QListWidget
+            if check == count_items and count_items != 0:
+                QMessageBox.information(self, 'Внимание', 'Вы не выбрали файлы для удаления!', QMessageBox.Ok)
 
+            #  Удаление всех выбранных элементов (не установлен checkbox)
+            while check != count_items:
+                for rows in range(count_items):  # от 0 до 2
+                    item_selected = self.listWidgetChoose.item(rows)
+                    if item_selected is None:
+                        self.listWidgetChoose.takeItem(rows)
+                    elif item_selected.checkState() == QtCore.Qt.Unchecked:
+                        self.listWidgetChoose.takeItem(rows)
+                check = check + 1
+        except Exception as e:
+            QMessageBox.warning(self, 'Внимание', 'Ошибка при работе с файлом! Обратитесь к администратору',
+                                QMessageBox.Ok)
+            print("Ошибка", str(e))
+
+    #  Функция для добавления файлов и каталогов на КЦ
     def control_files(self):
         item_text_list = [str(self.listWidgetChoose.item(i).text()) for i in
                           range(self.listWidgetChoose.count())]  # перебор элементов в окне выбора файлов
@@ -125,7 +144,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
             with open("out.txt", "w") as files_control:
                 for file in item_text_list:
                     if os.path.exists(file) and os.path.isfile(file):
-                        shutil.copy2(file, backup_file) # резервное копирование файлов
+                        shutil.copy2(file, backup_file)  # резервное копирование файлов
                         file_hash = hash_file(file)
                         item = icons('./icons/file.png', file)
                         self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
@@ -143,13 +162,27 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                     else:
                         files_control.close()
                         QMessageBox.information(self, 'Внимание',
-                                                f'Вы не добавили файлы для контроля целостности! Повторите попытку',
+                                                f'Проверьте правильность выбранных файлов.\nВозможно вы не добавили '
+                                                f'файлы для контроля целостности или выбранные вами файлы были '
+                                                f'удалены.\nПроверьте правильность выбранных данных и повторите '
+                                                f'попытку.\n В ином случае - обратитесь к администратору  '
+                                                ,
                                                 QMessageBox.Ok)
         except Exception as e:
-            QMessageBox.information(self, 'Внимание', 'Ошибка при работе с файлом!', QMessageBox.Ok)
+            QMessageBox.warning(self, 'Внимание', 'Ошибка при работе с файлом! Обратитесь к администратору',
+                                QMessageBox.Ok)
             print("Ошибка", str(e))
 
+    # Функция запуска таймера
+    def start_timer(self):
+        self.timer.start()
 
+    # Функция остановки таймера
+    def stop_timer(self):
+        self.timer.stop()
+        QMessageBox.information(self, 'Внимание', 'Автоматическая проверка КЦ остановлена',
+                            QMessageBox.Ok)
+    # Функция создания списка файлов для последующей проверки КЦ
     def list_files(self):
         # Функция формирует списки элементов для проверки
         out_file = read_files("out.txt")
@@ -168,64 +201,78 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                 file = file
                 file_hash = 1
                 list_files.append(f"{file}, {file_hash}")  # Добавление файла в список файлов
-
-        print(f"Список файлов: {list_files}")
-        print(f"Список файлов в выходном файле: {list_in_out_file}")
         return list_files, list_in_out_file
 
-
-
-
+    # Функция проверки КЦ
     def check_files(self):
-
-        list_res = self.list_files()  # Формируем список файлов для проверки
-        list_files, list_in_out_file = list_res  #  Отделяем сформированный список файлов от списка в out.txt
-        count = len(list_in_out_file)
-        for item in range(count):
-            file_str = str(list_files[item])  # Перевод к строке элементов в новом списке файлов и хешей
-            file_res_tuple = tuple(str(item) for item in file_str.split(',') if item != '')  # Отделяем файлы и хеши в общем списке
-            name_path_file, sha_hash = file_res_tuple
-            if list_files[item] != list_in_out_file[item]:
-                if list_files[item] == f"{name_path_file}, 1":
-                    item_res_er = items_out_control('./icons/error.png', f"Нарушение КЦ файла {name_path_file}. Файл удален!", time)
-                    self.listWidgetOutput.addItem(item_res_er)
+        try:
+            list_res = self.list_files()  # Формируем список файлов для проверки
+            list_files, list_in_out_file = list_res  # Отделяем сформированный список файлов от списка в out.txt
+            count = len(list_in_out_file)
+            for item in range(count):
+                file_str = str(list_files[item])  # Перевод к строке элементов в новом списке файлов и хешей
+                file_res_tuple = tuple(str(item) for item in file_str.split(',') if item != '')   # Отделяем файлы и хеши
+                # в общем списке
+                name_path_file, sha_hash = file_res_tuple
+                if list_files[item] != list_in_out_file[item]:
+                    if list_files[item] == f"{name_path_file}, 1":
+                        item_res_er = items_out_control('./icons/error.png', f"Нарушение КЦ файла {name_path_file}. "
+                                                                             f"Файл "
+                                                                             f"удален или переименован!", time)
+                        self.listWidgetOutput.addItem(item_res_er)
+                    else:
+                        item_res_er = items_out_control('./icons/error.png', f"Нарушение КЦ файла {name_path_file}. Файл "
+                                                                             f"изменен!", time)
+                        self.listWidgetOutput.addItem(item_res_er)
                 else:
-                    item_res_er = items_out_control('./icons/error.png', f"Нарушение КЦ файла {name_path_file}. Файл изменен!", time)
-                    self.listWidgetOutput.addItem(item_res_er)
-            else:
-                item_res_suc = items_out_control('./icons/success.png', f"КЦ файла {name_path_file} не нарушен", time)
-                self.listWidgetOutput.addItem(item_res_suc)
+                    item_res_suc = items_out_control('./icons/success.png', f"КЦ файла {name_path_file} не нарушен", time)
+                    self.listWidgetOutput.addItem(item_res_suc)
 
-        QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
+            QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
+        except Exception as e:
+            QMessageBox.warning(self, 'Внимание', 'Ошибка при проверке КЦ файлов! Обратитесь к администратору',
+                                QMessageBox.Ok)
+            print("Ошибка", str(e))
 
+    # Функция для выбора пути к каталогу (куда восстановить)
+    def path_dir_choose(self):
+        directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите каталог", '/home/spi_729-1/Документы')
+        self.textPathIn.setText(directory)
+
+    # Функция для выбора пути к файлу для восстановления
+    def path_file_choose(self):
+        file, x = QtWidgets.QFileDialog.getOpenFileName(self, 'Выберите файлы', '/home/spi_729-1/Документы/Backup')
+        self.textPathOut.setText(file)
+
+    # Функция для выбора пути к каталогу для восстановления
+    def path_dir2_choose(self):
+        directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Выберите каталог", '/home/spi_729-1'
+                                                                                         '/Документы/Backup')
+        self.textPathOut.setText(directory)
+
+    # Функция для восстановления файла
     def recovery_files(self):
-        # Функция для восстановления файлов
-
-        list_res = self.list_files()  # Формируем список файлов для проверки
-        list_files, list_in_out_file = list_res  # Отделяем сформированный список файлов от списка в out.txt
-        count = len(list_in_out_file)
-        backup_file = '/home/spi_729-1/Документы/Backup/'
-        for item in range(count):
-            file_str = str(list_files[item])  # Перевод к строке элементов в новом списке файлов и хешей
-            file_res_tuple = tuple(
-                str(item) for item in file_str.split(',') if item != '')  # Отделяем файлы и хеши в общем списке
-            name_path_file, sha_hash = file_res_tuple
-            if list_files[item] != list_in_out_file[item]:
-                if list_files[item] == f"{name_path_file}, 1":
-                    base_name = os.path.basename(name_path_file)
-                    print("basename", base_name)
-                    backup_file = search_file(base_name, backup_file)  # Найденный файл в каталоге Backup
-                    shutil.copy2(backup_file, name_path_file)  # Копирование файла в первоначальный каталог
-                    # if os.path.isfile(backup_file):
-                    #     print("Надо восстановить файл от удаления")
-                    # else:
-                    #     print("Надо восстановить каталог от удаления")
-                else:
-                    print("Надо восстановить измененные файлы")
+        try:
+            # Функция для восстановления файлов
+            text_in = self.textPathIn.toPlainText()
+            text_out = self.textPathOut.toPlainText()
+            if os.path.exists(text_in) and os.path.exists(text_out) and os.path.isfile(text_out):
+                shutil.copy2(text_out, text_in)
+                QMessageBox.information(self, 'Внимание', f'Восстановление файла {text_out} выполнено успешно!',
+                                        QMessageBox.Ok)
+            elif os.path.exists(text_in) and os.path.exists(text_out) and os.path.isdir(text_out):
+                base_name = os.path.basename(text_out)
+                shutil.copytree(text_out, f'{text_in}/{base_name}')
+                QMessageBox.information(self, 'Внимание', f'Восстановление каталога {text_out} выполнено успешно!',
+                                        QMessageBox.Ok)
             else:
-                print("Все в порядке")
-
-
+                QMessageBox.warning(self, 'Внимание', 'Восстановление файлов не удалось.\nПроверьте правильность '
+                                                      'выбранных данных!\nВозможно вы не выбрали файлы для восстановления'
+                                                      ' данных.\nПовторите попытку.', QMessageBox.Ok)
+        except Exception as e:
+            QMessageBox.warning(self, 'Внимание', 'Ошибка при проверке КЦ файлов! Обратитесь к администратору',
+                                QMessageBox.Ok)
+            print("Ошибка", str(e))
 
 
 # Функция для вывода иконок и checkbox у файлов
@@ -238,6 +285,8 @@ def icons(picture, file):
     item.setText(file)
     return item
 
+
+# Функция для вывода файлов, прошедших проверку КЦ
 def items_out_control(picture, file, timestr):
     # Создаем иконки для файлов
     timestr = timestr.strftime("%d.%m.%Y  %H:%M:%S")
@@ -246,6 +295,7 @@ def items_out_control(picture, file, timestr):
     item.setIcon(icon)
     item.setText(f"{file}  Дата: {timestr}")
     return item
+
 
 # Функция для получения хеш-суммы файла
 def hash_file(file_name):
@@ -276,17 +326,20 @@ def hash_dir(dir_path):
     return hashlib.sha256(dir_hash.encode('utf8')).hexdigest()
 
 
+# Функция для чтения файла
 def read_files(files):
     file_main = open(files, "r")
     file_string = file_main.read()
     file_tuple = tuple(str(item) for item in file_string.split('\n') if item != '')  # разделила файлы по табуляции
     return file_tuple
 
+
+# Функция для поиска файла в указанном каталоге
 def search_file(filename, directory):
     for root, dirs, files in os.walk(directory):
         if filename in files:
             return os.path.join(root, filename)
-
+    return None
 
 
 def main():
