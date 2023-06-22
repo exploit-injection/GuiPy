@@ -29,16 +29,22 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
         self.btnControl.clicked.connect(self.start_timer)  # Запуск таймера по нажатию кнопки "Добавить на КЦ"
         self.timer.timeout.connect(self.check_files)  # подключили таймер к методу проверить КЦ
         self.timer.setInterval(60000)
+        self.pushButton_3.setEnabled(False)
         self.pushButton_3.clicked.connect(self.check_files)  # инициализация для метода по нажатию кнопки "Проверить КЦ"
+        self.btnChoosefile_2.setEnabled(False)
         self.btnChoosefile_2.clicked.connect(self.path_dir_choose)  # инициализация для метода по нажатию кнопки
         # "Выбрать каталог"
+        self.btnfile_backup.setEnabled(False)
         self.btnfile_backup.clicked.connect(
             self.path_file_choose)  # инициализация для метода по нажатию кнопки "Файл (backup)"
+        self.btndir_backup.setEnabled(False)
         self.btndir_backup.clicked.connect(
             self.path_dir2_choose)  # инициализация для метода по нажатию кнопки "Каталог (backup)"
+        self.btnRecovery.setEnabled(False)
         self.btnRecovery.clicked.connect(self.recovery_files)  # инициализация для метода по нажатию кнопки
         # "Восстановить"
-        self.pushButton.clicked.connect(self.stop_timer)  # инициализация для метода по нажатию кнопки
+        self.pushButton.setEnabled(False)
+        self.pushButton.clicked.connect(self.stop_timer)  # инициализация для метода по нажатию кнопки "Остановить проверку КЦ"
 
     # Функция для выбора каталога
     def choose_dir(self):
@@ -153,6 +159,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                             file_hash = hash_file(file)
                             item = icons('./icons/file.png', file)
                             self.listWidgetControl.addItem(item)  # Добавление файлов в поле "Файлы на КЦ"
+                            self.pushButton_3.setEnabled(True)
                             print(file, file_hash)
                             files_control.write(f"{file}, {file_hash}\n")  # Запись данных в файл
                         elif os.path.exists(file) and os.path.isdir(file):
@@ -162,6 +169,7 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                             dir_hash = hash_dir(file)
                             item = icons('./icons/dir.png', file)
                             self.listWidgetControl.addItem(item)  # Добавление каталогов в поле "Файлы на КЦ"
+                            self.pushButton_3.setEnabled(True)
                             print(file, dir_hash)
                             files_control.write(f"{file}, {dir_hash}\n")  # Запись данных в файл
                         else:
@@ -179,18 +187,23 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
 
     # Функция запуска таймера
     def start_timer(self):
-        self.timer.start()
+        count_items = self.listWidgetChoose.count()  # Находим кол-во элементов в QListWidget
+        # Проверка на заполнение QListWidget
+        if count_items == 0:
+            return
+        else:
+            self.timer.start()
+            QMessageBox.information(self, 'Внимание', 'Запущена автоматическая проверка КЦ\n'
+                                                      'Вы можете остановить автоматическую проверку.\n'
+                                                      'Для этого нажмите кнопку "Остановить проверку КЦ"')
+            self.pushButton.setEnabled(True)
 
     # Функция остановки таймера
     def stop_timer(self):
-        count_items = self.listWidgetControl.count()  # Находим кол-во элементов в QListWidget
-        # Проверка на заполнение QListWidget
-        if count_items == 0:
-            QMessageBox.warning(self, 'Внимание', 'Автоматическая проверка КЦ не была запущена!\n'
-                                                  'Нет файлов установленных на КЦ!', QMessageBox.Ok)
-        else:
-            self.timer.stop()
-            QMessageBox.information(self, 'Внимание', 'Автоматическая проверка КЦ остановлена', QMessageBox.Ok)
+        self.timer.stop()
+        QMessageBox.information(self, 'Внимание', 'Автоматическая проверка КЦ остановлена!\n'
+                                                  'Для её активации добавьте снова файлы на КЦ.', QMessageBox.Ok)
+        self.pushButton.setEnabled(False)
 
     # Функция создания списка файлов для последующей проверки КЦ
     def list_files(self):
@@ -216,39 +229,36 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
     # Функция проверки КЦ
     def check_files(self):
         try:
-            count_items = self.listWidgetControl.count()  # Находим кол-во элементов в QListWidget
-            # Проверка на заполнение QListWidget
-            if count_items == 0:
-                QMessageBox.warning(self, 'Внимание', 'Проверка КЦ не выполнена!\n'
-                                                      'Нет файлов установленных на КЦ!', QMessageBox.Ok)
-            else:
-                list_res = self.list_files()  # Формируем список файлов для проверки
-                list_files, list_in_out_file = list_res  # Отделяем сформированный список файлов от списка в out.txt
-                count = len(list_in_out_file)
-                for item in range(count):
-                    file_str = str(list_files[item])  # Перевод к строке элементов в новом списке файлов и хешей
-                    file_res_tuple = tuple(
-                        str(item) for item in file_str.split(',') if item != '')  # Отделяем файлы и хеши
-                    # в общем списке
-                    name_path_file, sha_hash = file_res_tuple
-                    if list_files[item] != list_in_out_file[item]:
-                        if list_files[item] == f"{name_path_file}, 1":
-                            item_res_er = items_out_control('./icons/error.png',
-                                                            f"Нарушение КЦ файла {name_path_file}. "
-                                                            f"Файл "
-                                                            f"удален или переименован!", time)
-                            self.listWidgetOutput.addItem(item_res_er)
-                        else:
-                            item_res_er = items_out_control('./icons/error.png',
-                                                            f"Нарушение КЦ файла {name_path_file}. Файл "
-                                                            f"изменен!", time)
-                            self.listWidgetOutput.addItem(item_res_er)
+            list_res = self.list_files()  # Формируем список файлов для проверки
+            list_files, list_in_out_file = list_res  # Отделяем сформированный список файлов от списка в out.txt
+            count = len(list_in_out_file)
+            for item in range(count):
+                file_str = str(list_files[item])  # Перевод к строке элементов в новом списке файлов и хешей
+                file_res_tuple = tuple(
+                    str(item) for item in file_str.split(',') if item != '')  # Отделяем файлы и хеши
+                # в общем списке
+                name_path_file, sha_hash = file_res_tuple
+                if list_files[item] != list_in_out_file[item]:
+                    if list_files[item] == f"{name_path_file}, 1":
+                        item_res_er = items_out_control('./icons/error.png',
+                                                        f"Нарушение КЦ файла {name_path_file}. "
+                                                        f"Файл "
+                                                        f"удален или переименован!", time)
+                        self.listWidgetOutput.addItem(item_res_er)
                     else:
-                        item_res_suc = items_out_control('./icons/success.png', f"КЦ файла {name_path_file} не нарушен",
-                                                         time)
-                        self.listWidgetOutput.addItem(item_res_suc)
-
-                QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
+                        item_res_er = items_out_control('./icons/error.png',
+                                                        f"Нарушение КЦ файла {name_path_file}. Файл "
+                                                        f"изменен!", time)
+                        self.listWidgetOutput.addItem(item_res_er)
+                else:
+                    item_res_suc = items_out_control('./icons/success.png', f"КЦ файла {name_path_file} не нарушен",
+                                                     time)
+                    self.listWidgetOutput.addItem(item_res_suc)
+            self.btnChoosefile_2.setEnabled(True)
+            self.btnfile_backup.setEnabled(True)
+            self.btndir_backup.setEnabled(True)
+            self.btnRecovery.setEnabled(True)
+            QMessageBox.information(self, 'Внимание', f'Проверка КЦ файлов успешно завершена!', QMessageBox.Ok)
         except Exception as e:
             QMessageBox.critical(self, 'Внимание', f'Ошибка при проверке КЦ файлов!\n{str(e)}\n'
                                                    f'Обратитесь к администратору',
