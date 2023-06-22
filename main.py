@@ -290,6 +290,8 @@ class ExampleApp(QtWidgets.QMainWindow, control.Ui_MainWindow):
                                                       'выбранных данных!\nВозможно вы не выбрали файлы для '
                                                       'восстановления'
                                                       ' данных.\nПовторите попытку.', QMessageBox.Ok)
+            self.textPathIn.clear()
+            self.textPathOut.clear()
         except Exception as e:
             QMessageBox.critical(self, 'Внимание', f'Не удалось восстановить файл.\n{str(e)}\nПроверьте '
                                                    f'правильность выбранных данных или обратитесь к администратору',
